@@ -19,7 +19,10 @@ public class Driver {
        We make Webdriver private, because we want to close access from outside the class.
        We make it static because we will use it in a static method.
     */
-    private static WebDriver driver;
+    //private static WebDriver driver;   burada thredleri local a gonderecegimiz icin artik, tum driver yazan yerleri
+                                        //driverPool.get() methoduyla degistiriyoruz
+
+    private static InheritableThreadLocal<WebDriver> driverPool = new InheritableThreadLocal<>();
 
 
     /*
@@ -27,7 +30,7 @@ public class Driver {
      */
     public static WebDriver getDriver(){
 
-        if (driver==null){
+        if (driverPool.get()==null){
 
             // We read our browserType from configuration.properties.
             // This way, we can control which browser is open from outside our code, from configuration.properties.
@@ -35,21 +38,21 @@ public class Driver {
             switch (browserType){
                 case "chrome":
                     WebDriverManager.chromedriver().setup();
-                    driver = new ChromeDriver();
-                    driver.manage().window().maximize();
-                    driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+                    driverPool.set(new ChromeDriver());
+                    driverPool.get().manage().window().maximize();
+                    driverPool.get().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
                     break;
 
                 case "firefox":
                     WebDriverManager.firefoxdriver().setup();
-                    driver = new ChromeDriver();
-                    driver.manage().window().maximize();
-                    driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+                    driverPool.set(new ChromeDriver());
+                    driverPool.get().manage().window().maximize();
+                    driverPool.get().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
                     break;
             }
         }
 
-        return driver;
+        return driverPool.get();
     }
 
     /*
@@ -57,9 +60,9 @@ public class Driver {
 
      */
     public static void closeDriver(){
-        if (driver != null){
-            driver.quit();//this line will terminate the existing session. value will not even be null
-            driver = null;
+        if (driverPool.get() != null){
+            driverPool.get().quit();    //this line will terminate the existing session. value will not even be null
+            driverPool.remove();
         }
     }
 
